@@ -136,3 +136,9 @@ download size first. After that it remembers that the weights are cached and loa
   Windows or macOS. `verify.html?compute=float16` checks it.
 - Mega (about 5.4 GB fp16): the code is size-agnostic (`convert.py mega`), but loading needs sharded
   downloads and realistically float16 compute.
+
+## License
+
+MIT, see [LICENSE](LICENSE). The model code is ported from
+[min-dalle](https://github.com/kuprel/min-dalle) (MIT, © 2022 Brett Kuprel). The weights aren't in this
+repository; they come from DALL·E Mini and its VQGAN, under their own licenses.
