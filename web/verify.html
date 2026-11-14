@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>dalle-js checks</title>
+    <style>
+      :root { color-scheme: light dark; font-family: ui-sans-serif, system-ui, sans-serif; }
+      body { margin: 0 auto; max-width: 960px; padding: 16px; }
+      form { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; margin-bottom: 12px; }
+      pre { font: 13px/1.45 ui-monospace, monospace; white-space: pre-wrap; padding: 12px; border-radius: 6px;
+            background: color-mix(in srgb, currentColor 6%, transparent); min-height: 4em; }
+    </style>
+  </head>
+  <body>
+    <h1>dalle-js reference checks</h1>
+    <p>Runs the port against min-dalle reference tensors on WebGPU. Dev only; needs <code>npm run dev</code>.</p>
+    <form id="form">
+      <label>Weights <select name="precision"><option>f16</option><option>f32</option></select></label>
+      <label>Compute <select name="compute"><option>auto</option><option>float16</option><option>float32</option></select></label>
+      <label>Decoder steps <input name="steps" type="number" min="1" max="256" value="256" style="width: 5em" /></label>
+      <label><input type="checkbox" name="stage" value="tokenizer" checked /> tokenizer</label>
+      <label><input type="checkbox" name="stage" value="encoder" checked /> encoder</label>
+      <label><input type="checkbox" name="stage" value="decoder" checked /> decoder</label>
+      <label><input type="checkbox" name="stage" value="vqgan" checked /> vqgan</label>
+      <button>Run</button>
+    </form>
+    <pre id="log"></pre>
+    <script type="module" src="./verify.ts"></script>
+  </body>
+</html>

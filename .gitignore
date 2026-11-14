@@ -1,0 +1,7 @@
+node_modules/
+weights/
+refs/
+dist/
+*.part
+__pycache__/
+.claude/
