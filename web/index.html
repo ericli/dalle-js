@@ -3,154 +3,151 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>DALL·E Mini in your browser</title>
-    <meta name="description" content="Text-to-image generation with DALL·E Mini, running entirely on your GPU with WebGPU and jax-js." />
-    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Crect width='7' height='7' rx='1.5' fill='%232a78d6'/%3E%3Crect x='9' width='7' height='7' rx='1.5' fill='%2386b6ef'/%3E%3Crect y='9' width='7' height='7' rx='1.5' fill='%2386b6ef'/%3E%3Crect x='9' y='9' width='7' height='7' rx='1.5' fill='%231c5cab'/%3E%3C/svg%3E" />
+    <title>DALL·E Mini</title>
+    <meta name="description" content="DALL·E Mini, a text-to-image model, running entirely on your GPU in the browser." />
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Crect x='1' y='1' width='6' height='6' fill='%23000'/%3E%3Crect x='9' y='1' width='6' height='6' fill='none' stroke='%23000'/%3E%3Crect x='1' y='9' width='6' height='6' fill='none' stroke='%23000'/%3E%3Crect x='9' y='9' width='6' height='6' fill='%23000'/%3E%3C/svg%3E" />
     <link rel="stylesheet" href="./style.css" />
   </head>
   <body>
+    <header class="topbar">
+      <nav class="crumbs" aria-label="Breadcrumb">
+        <a href="/">Eric Li</a>
+        <span aria-hidden="true">/</span>
+        <span aria-current="page">DALL·E Mini</span>
+      </nav>
+      <div class="bar-links">
+        <button id="toggle-insights" class="link-button" type="button" aria-pressed="false" aria-controls="insights">
+          How it works
+        </button>
+        <a href="https://github.com/ericli/dalle-js">Source</a>
+      </div>
+    </header>
+
     <div class="layout">
       <main>
-        <header class="top">
-          <div class="brand">
-            <h1>DALL·E Mini</h1>
-            <p>Text to image, running entirely on your GPU.</p>
-          </div>
-          <button id="toggle-insights" class="toggle" type="button" aria-pressed="false" aria-controls="insights">
-            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
-              <rect x="1.5" y="2" width="4" height="12" rx="1" />
-              <rect x="6.5" y="5" width="3" height="9" rx="1" />
-              <rect x="10.5" y="8" width="4" height="6" rx="1" />
-            </svg>
-            How it works
-          </button>
-        </header>
-
-        <section class="compose" aria-label="Prompt">
-          <form id="prompt-form" class="prompt-row">
-            <label for="prompt" class="sr-only">Prompt</label>
-            <input id="prompt" name="prompt" type="text" maxlength="300" autocomplete="off" spellcheck="true"
-              placeholder="an armchair in the shape of an avocado" />
-            <button id="generate" class="primary" type="submit">Generate</button>
-          </form>
-          <div class="options">
-            <div class="segmented" role="radiogroup" aria-label="Number of images">
-              <span>Images</span>
-              <span class="seg">
-                <label class="opt"><input type="radio" name="count" value="1" /><span>1</span></label>
-                <label class="opt"><input type="radio" name="count" value="4" checked /><span>4</span></label>
-                <label class="opt"><input type="radio" name="count" value="9" /><span>9</span></label>
-              </span>
-            </div>
-            <details class="settings">
-              <summary>Settings</summary>
-              <div class="settings-grid">
-                <label>Seed <input id="seed" type="number" min="0" max="2147483647" step="1" placeholder="random" /></label>
-                <label>Temperature <input id="temperature" type="number" min="0.1" max="3" step="0.1" value="1" /></label>
-                <label>Top-k <input id="top-k" type="number" min="1" max="16384" step="1" value="256" /></label>
-                <label>Supercondition <input id="supercondition" type="number" min="1" max="64" step="1" value="16" /></label>
-              </div>
-            </details>
-          </div>
-          <p class="hint" id="hint">
-            The first run downloads about 925 MB of model weights, which your browser keeps for next time. Nothing you
-            type leaves your device.
+        <section class="intro">
+          <h1>DALL·E Mini</h1>
+          <p>
+            A text-to-image model from 2021, running entirely on your GPU. Type a prompt and it paints a 256×256
+            image, one 16×16 patch at a time. Nothing you type leaves your device.
           </p>
+          <p class="label">BART + VQGAN · 485M parameters · WebGPU</p>
         </section>
+
+        <form id="prompt-form" class="prompt">
+          <label for="prompt" class="sr-only">Prompt</label>
+          <input id="prompt" name="prompt" type="text" maxlength="300" autocomplete="off" spellcheck="true"
+            placeholder="an armchair in the shape of an avocado" />
+          <button id="generate" class="button primary" type="submit">Generate</button>
+        </form>
+
+        <div class="controls">
+          <div class="brackets" role="radiogroup" aria-label="Number of images">
+            <span class="label">Images</span>
+            <label><input type="radio" name="count" value="1" /><span>[1]</span></label>
+            <label><input type="radio" name="count" value="4" checked /><span>[4]</span></label>
+            <label><input type="radio" name="count" value="9" /><span>[9]</span></label>
+          </div>
+          <details class="settings">
+            <summary class="label">Settings</summary>
+            <div class="settings-grid">
+              <label><span class="label">Seed</span><input id="seed" type="number" min="0" max="2147483647" step="1" placeholder="random" /></label>
+              <label><span class="label">Temperature</span><input id="temperature" type="number" min="0.1" max="3" step="0.1" value="1" /></label>
+              <label><span class="label">Top-k</span><input id="top-k" type="number" min="1" max="16384" step="1" value="256" /></label>
+              <label><span class="label">Supercondition</span><input id="supercondition" type="number" min="1" max="64" step="1" value="16" /></label>
+            </div>
+          </details>
+        </div>
+        <p class="hint" id="hint">
+          The first run downloads 925 MB of weights. Your browser keeps them, so later visits start in seconds.
+        </p>
 
         <section id="status" class="status" aria-live="polite">
           <div class="track" hidden><div class="fill"></div></div>
-          <span id="status-text"></span>
+          <span id="status-text" class="label"></span>
         </section>
 
-        <section id="results" class="results" aria-label="Generated images">
-          <div class="empty">Your images will appear here.</div>
+        <section class="current" aria-label="Generated images">
+          <p id="current-caption" class="caption" hidden></p>
+          <div id="results" class="results">
+            <div class="empty">Images appear here.</div>
+          </div>
         </section>
 
         <section class="history" id="history" hidden>
-          <h2>Earlier</h2>
-          <ol id="history-list"></ol>
+          <h2 class="label">Earlier <span id="history-count"></span></h2>
+          <ol id="history-list" class="blocks"></ol>
         </section>
 
         <footer>
           <p>
-            <a href="https://github.com/borisdayma/dalle-mini">DALL·E Mini</a> by Boris Dayma et al., ported from
-            <a href="https://github.com/kuprel/min-dalle">min-dalle</a> by Brett Kuprel, running on
-            <a href="https://github.com/ekzhang/jax-js">jax-js</a>. <span id="device-info"></span>
+            <a href="https://github.com/borisdayma/dalle-mini">DALL·E Mini</a> by Boris Dayma et al. Ported from
+            <a href="https://github.com/kuprel/min-dalle">min-dalle</a> by Brett Kuprel. Runs on
+            <a href="https://github.com/ekzhang/jax-js">jax-js</a>.
           </p>
+          <p class="label" id="device-info"></p>
         </footer>
       </main>
 
       <aside id="insights" class="insights" hidden aria-label="How it works">
         <header>
           <h2>How it works</h2>
-          <p>Every stage runs on your GPU. Scrub through the 256 decoding steps, or replay them.</p>
+          <p>Each stage runs on your GPU. Scrub through the 256 steps, or replay them.</p>
         </header>
         <div class="scrubber">
-          <button id="replay" type="button">Replay</button>
+          <button id="replay" class="button" type="button">Replay</button>
           <input id="step-slider" type="range" min="0" max="255" value="0" aria-label="Decoder step" />
-          <output id="step-output">—</output>
+          <output id="step-output" class="label">—</output>
         </div>
         <ol class="pipeline">
           <li class="stage" data-stage="tokenize" data-state="pending">
-            <span class="dot"></span>
-            <h3>Tokenizer<span class="meta" id="tok-meta"></span></h3>
-            <p class="explain">
-              The prompt is lowercased and split into subwords from a 50,264-entry vocabulary, between start and end
-              markers.
-            </p>
+            <h3><span class="num">[1]</span> Tokenizer <span class="label meta" id="tok-meta"></span></h3>
+            <p class="explain">The prompt is lowercased and split into subwords, between start and end markers.</p>
             <div class="body"><div id="tok-chips" class="chips"></div></div>
           </li>
           <li class="stage" data-stage="encode" data-state="pending">
-            <span class="dot"></span>
-            <h3>Text encoder<span class="meta" id="enc-meta">BART · 12 layers</span></h3>
-            <p class="explain">
-              Twelve transformer layers turn the tokens into 1,024 features each, which the image decoder reads at
-              every step.
-            </p>
+            <h3><span class="num">[2]</span> Text encoder <span class="label meta" id="enc-meta">12 layers</span></h3>
+            <p class="explain">Twelve transformer layers turn each token into 1,024 numbers, which the decoder reads at every step.</p>
             <div class="body">
               <div class="layers" id="enc-layers"></div>
               <div class="heat-wrap">
                 <div class="heat-labels" id="enc-labels"></div>
                 <canvas id="enc-heat" class="heat" aria-label="Encoder output heatmap"></canvas>
               </div>
-              <div class="legend"><span>−</span><span class="ramp"></span><span>+</span><span>· first 128 of 1,024 features</span></div>
+              <div class="legend label"><span>−</span><span class="ramp"></span><span>+</span><span>first 128 of 1,024 features</span></div>
             </div>
           </li>
           <li class="stage" data-stage="decode" data-state="pending">
-            <span class="dot"></span>
-            <h3>Image decoder<span class="meta">BART · 12 layers · 256 steps</span></h3>
+            <h3><span class="num">[3]</span> Image decoder <span class="label meta">12 layers · 256 steps</span></h3>
             <p class="explain">
-              Picks the image one 16×16-pixel patch at a time, left to right, top to bottom: 256 tokens from a
-              16,384-entry codebook. Each step runs twice, with and without the prompt, and pushes the result away
-              from the unprompted guess.
+              Picks one patch at a time, left to right, top to bottom, from a codebook of 16,384. Each step runs twice,
+              with and without the prompt, then exaggerates the difference.
             </p>
             <div class="body">
               <div class="layers" id="dec-layers"></div>
               <div class="decode-top">
-                <figure class="token-grid-wrap" style="margin: 0">
+                <figure class="token-grid-wrap">
                   <canvas id="token-grid" class="token-grid" width="16" height="16"></canvas>
                   <div id="grid-cursor" class="grid-cursor" hidden></div>
-                  <figcaption>The image so far, previewed from the VQGAN's first layers</figcaption>
+                  <figcaption class="label">Image so far</figcaption>
                 </figure>
                 <div>
                   <div class="big-step" id="big-step">0<small> / 256</small></div>
-                  <div class="step-meta" id="step-meta">&nbsp;</div>
-                  <div class="formula">logits = 16 × with prompt − 15 × without</div>
+                  <div class="step-meta label" id="step-meta">&nbsp;</div>
+                  <div class="formula label">16 × with prompt − 15 × without</div>
                 </div>
               </div>
-              <h4>Candidates for this patch</h4>
+              <h4 class="label">Candidates for this patch</h4>
               <ol id="candidates" class="bars"></ol>
-              <h4>Attending to</h4>
+              <h4 class="label">Attending to</h4>
               <div id="attn-chips" class="chips"></div>
             </div>
           </li>
           <li class="stage" data-stage="vqgan" data-state="pending">
-            <span class="dot"></span>
-            <h3>VQGAN decoder<span class="meta">16×16 tokens → 256×256 pixels</span></h3>
+            <h3><span class="num">[4]</span> VQGAN <span class="label meta">16×16 tokens → 256×256 pixels</span></h3>
             <p class="explain">
-              A convolutional decoder looks each token up in its codebook and upsamples 16× to pixels. Colors below are
-              a fixed projection of its internal channels.
+              Looks up each token's code and upsamples sixteen-fold into pixels. The colors are a fixed projection of
+              its internal channels.
             </p>
             <div class="body"><div id="vq-strip" class="strip"></div></div>
           </li>

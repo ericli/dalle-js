@@ -6,7 +6,7 @@ import { InsightsPanel, type Trace } from "./insights.ts";
 
 /** Where the converted weights live; set VITE_WEIGHTS_URL for production. */
 const WEIGHTS_URL: string = import.meta.env.VITE_WEIGHTS_URL ?? "/weights/mini/";
-const MAX_HISTORY = 8;
+const MAX_HISTORY = 12;
 const CACHED_FLAG = "dalle-js:weights-cached";
 
 const $ = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;
@@ -84,7 +84,7 @@ function loadModel(): Promise<DalleModel> {
         const label = FILE_LABELS[file.split(".")[0]] ?? file;
         const mb = (x: number) => (x / 2 ** 20).toFixed(0);
         setStatus(
-          total ? `Downloading ${label} weights · ${mb(loaded)} of ${mb(total)} MB` : `Downloading ${label} weights · ${mb(loaded)} MB`,
+          total ? `Downloading ${label} · ${mb(loaded)} / ${mb(total)} MB` : `Downloading ${label} · ${mb(loaded)} MB`,
           total ? loaded / total : undefined,
         );
       },
@@ -94,8 +94,8 @@ function loadModel(): Promise<DalleModel> {
     } catch {
       // Storage may be unavailable (private mode); only costs an auto-load.
     }
-    $("device-info").textContent = `Computing in ${m.computeDtype} on WebGPU.`;
-    setStatus(`Model ready in ${((performance.now() - t0) / 1000).toFixed(1)} s.`);
+    $("device-info").textContent = `${m.computeDtype} · WebGPU`;
+    setStatus(`Model ready · ${((performance.now() - t0) / 1000).toFixed(1)} s`);
     return m;
   })();
   loading.catch(() => (loading = null));
@@ -147,7 +147,17 @@ function buildCards(trace: Trace) {
     return { root, preview, final, badge };
   });
   results.replaceChildren(...cards.map((c) => c.root));
+  renderCaption(trace);
   renderSelection();
+}
+
+function renderCaption(trace: Trace) {
+  const caption = $("current-caption");
+  caption.hidden = false;
+  const meta = document.createElement("span");
+  meta.className = "label";
+  meta.textContent = `seed ${trace.seed}${trace.totalMs ? ` · ${(trace.totalMs / 1000).toFixed(1)} s` : ""}`;
+  caption.replaceChildren(trace.prompt, meta);
 }
 
 function renderSelection() {
@@ -169,9 +179,9 @@ function renderResults(trace: Trace) {
       trace.phase === "decoding" || trace.phase === "encoding"
         ? `${steps} / ${IMAGE_TOKEN_COUNT}`
         : trace.phase === "vqgan"
-          ? "Decoding pixels…"
+          ? "PIXELS"
           : trace.phase === "stopped"
-            ? "Stopped"
+            ? "STOPPED"
             : "";
   });
 }
@@ -190,30 +200,30 @@ function scheduleRender() {
 // ---- History ---------------------------------------------------------------
 
 function renderHistory() {
-  const list = $("history-list");
-  $("history").hidden = history.length < 2;
-  list.replaceChildren(
-    ...history.map((t) => {
+  const earlier = history.filter((t) => t !== current);
+  $("history").hidden = earlier.length === 0;
+  $("history-count").textContent = `· ${earlier.length}`;
+  $("history-list").replaceChildren(
+    ...earlier.map((t) => {
       const li = document.createElement("li");
       const button = document.createElement("button");
       button.type = "button";
-      if (t === current) button.setAttribute("aria-current", "true");
-      const thumbs = document.createElement("span");
-      thumbs.className = "thumbs";
-      for (const image of t.images.slice(0, 4)) {
-        if (!image) continue;
+      const thumb = document.createElement("span");
+      thumb.className = "thumb";
+      const image = t.images.find(Boolean);
+      if (image) {
         const c = Object.assign(document.createElement("canvas"), { width: 256, height: 256 });
         c.getContext("2d")!.putImageData(new ImageData(new Uint8ClampedArray(image), 256, 256), 0, 0);
-        thumbs.append(c);
+        thumb.append(c);
       }
+      const title = document.createElement("span");
+      title.className = "title";
+      title.textContent = t.prompt;
       const meta = document.createElement("span");
       meta.className = "meta";
-      const strong = document.createElement("strong");
-      strong.textContent = t.prompt;
-      const small = document.createElement("span");
-      small.textContent = `seed ${t.seed}${t.totalMs ? ` · ${(t.totalMs / 1000).toFixed(1)} s` : ""}`;
-      meta.append(strong, small);
-      button.append(thumbs, meta);
+      const n = t.images.filter(Boolean).length;
+      meta.textContent = `${n} image${n === 1 ? "" : "s"}${t.totalMs ? ` · ${(t.totalMs / 1000).toFixed(1)} s` : ""}`;
+      button.append(thumb, title, meta);
       button.addEventListener("click", () => {
         if (running) return;
         current = t;
@@ -223,6 +233,7 @@ function renderHistory() {
         renderResults(t);
         renderHistory();
         panel.show(t, 0);
+        window.scrollTo({ top: 0, behavior: "smooth" });
       });
       li.append(button);
       return li;
@@ -269,7 +280,7 @@ async function generate() {
   try {
     const m = model ?? (model = await loadModel());
     abort.signal.throwIfAborted();
-    setStatus("Encoding prompt…");
+    setStatus("Encoding prompt");
     const result = await m.generate(prompt, {
       seed,
       imageCount: count,
@@ -301,7 +312,7 @@ async function generate() {
           });
           const msPerStep = info.elapsedMs / (info.step + 1);
           setStatus(
-            `Decoding image tokens · step ${info.step + 1} of ${IMAGE_TOKEN_COUNT} · ${msPerStep.toFixed(0)} ms per step`,
+            `Step ${info.step + 1} / ${IMAGE_TOKEN_COUNT} · ${msPerStep.toFixed(0)} ms per step`,
             (info.step + 1) / IMAGE_TOKEN_COUNT,
           );
           scheduleRender();
@@ -314,7 +325,7 @@ async function generate() {
         onStage: (image, stage, map) => {
           trace.phase = "vqgan";
           trace.stages[image].set(stage, map);
-          setStatus(`Turning tokens into pixels · image ${image + 1} of ${count}`, (image + 0.5) / count);
+          setStatus(`Tokens to pixels · image ${image + 1} / ${count}`, (image + 0.5) / count);
           scheduleRender();
         },
         onImage: (image, rgba) => {
@@ -327,17 +338,18 @@ async function generate() {
     trace.totalMs = performance.now() - t0;
     const { encodeMs, decodeMs, detokenizeMs } = result.timings;
     setStatus(
-      `Done in ${(trace.totalMs / 1000).toFixed(1)} s · encoder ${encodeMs.toFixed(0)} ms, ` +
-        `decoder ${(decodeMs / 1000).toFixed(1)} s, VQGAN ${(detokenizeMs / 1000).toFixed(1)} s · seed ${seed}`,
+      `Done · ${(trace.totalMs / 1000).toFixed(1)} s · encoder ${encodeMs.toFixed(0)} ms · ` +
+        `decoder ${(decodeMs / 1000).toFixed(1)} s · VQGAN ${(detokenizeMs / 1000).toFixed(1)} s`,
     );
+    renderCaption(trace);
   } catch (e) {
     if (abort.signal.aborted) {
       trace.phase = "stopped";
-      setStatus("Stopped.");
+      setStatus("Stopped");
     } else {
       trace.phase = "error";
       console.error(e);
-      setStatus(`Something went wrong: ${(e as Error).message}`, undefined, true);
+      setStatus(`Error · ${(e as Error).message}`, undefined, true);
     }
   } finally {
     running = null;
