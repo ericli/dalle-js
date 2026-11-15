@@ -5,3 +5,5 @@ dist/
 *.part
 __pycache__/
 .claude/
+.vercel/
+.env*.local

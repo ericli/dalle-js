@@ -1,0 +1,8 @@
+node_modules
+weights
+refs
+dist
+python
+.claude
+.env*.local
+.vercel
