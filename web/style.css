@@ -972,3 +972,159 @@ canvas.token-grid {
   white-space: nowrap;
   transform: translate(-50%, calc(-100% - 10px));
 }
+
+/* ---- Image viewer (like Are.na's block view) ------------------------- */
+
+body:has(dialog[open]) {
+  overflow: hidden;
+}
+
+.viewer {
+  position: fixed;
+  inset: 0;
+  width: 100vw;
+  height: 100dvh;
+  max-width: none;
+  max-height: none;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: var(--bg);
+  color: var(--ink);
+}
+
+.viewer[open] {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 340px;
+}
+
+.viewer::backdrop {
+  background: var(--bg);
+}
+
+.viewer-stage {
+  position: relative;
+  display: grid;
+  place-items: center;
+  min-height: 0;
+  padding: 40px 72px;
+  cursor: zoom-out;
+}
+
+.viewer-stage canvas {
+  width: min(100%, calc(100dvh - 80px));
+  height: auto;
+  aspect-ratio: 1;
+  border: 1px solid var(--line);
+  cursor: default;
+}
+
+.viewer-nav {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  padding: 16px;
+  border: 0;
+  background: none;
+  color: var(--gray);
+  font-size: 24px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.viewer-nav:hover {
+  color: var(--ink-strong);
+}
+
+.viewer-nav.prev {
+  left: 12px;
+}
+
+.viewer-nav.next {
+  right: 12px;
+}
+
+.viewer-info {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  padding: 18px 24px;
+  border-left: 1px solid var(--line);
+  overflow-y: auto;
+  scrollbar-width: none;
+}
+
+.viewer-info::-webkit-scrollbar {
+  display: none;
+}
+
+.viewer-top {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  font-size: 12.5px;
+}
+
+.viewer-top .link-button .label {
+  margin-left: 4px;
+}
+
+.viewer-info h2 {
+  margin: 0;
+  font-size: 19.2px;
+  font-weight: 700;
+  line-height: 1.3;
+}
+
+.viewer-meta {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 8px 16px;
+  margin: 0;
+  padding-top: 12px;
+  border-top: 1px solid var(--line);
+  font-size: 12.5px;
+}
+
+.viewer-meta dt {
+  padding-top: 1px;
+}
+
+.viewer-meta dd {
+  margin: 0;
+}
+
+.viewer-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+@media (max-width: 760px) {
+  .viewer[open] {
+    display: block;
+    overflow-y: auto;
+    scrollbar-width: none;
+  }
+  .viewer-stage {
+    padding: 16px 40px;
+    min-height: auto;
+  }
+  .viewer-stage canvas {
+    width: 100%;
+  }
+  .viewer-nav {
+    padding: 8px;
+  }
+  .viewer-nav.prev {
+    left: 4px;
+  }
+  .viewer-nav.next {
+    right: 4px;
+  }
+  .viewer-info {
+    border-left: 0;
+    border-top: 1px solid var(--line);
+    overflow: visible;
+  }
+}

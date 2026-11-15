@@ -3,6 +3,7 @@ import { cachedFetch } from "@jax-js/loaders";
 
 import { DalleModel, type FileLoader, IMAGE_TOKEN_COUNT } from "../src/pipeline.ts";
 import { InsightsPanel, type Trace } from "./insights.ts";
+import { ImageViewer, fileName, savePNG } from "./viewer.ts";
 
 /** Where the converted weights live; set VITE_WEIGHTS_URL for production. */
 const WEIGHTS_URL: string = import.meta.env.VITE_WEIGHTS_URL ?? "/weights/mini/";
@@ -29,6 +30,28 @@ let selectedImage = 0;
 let nextId = 1;
 const history: Trace[] = [];
 const panel = new InsightsPanel(() => model?.tokenColors ?? null);
+const viewer = new ImageViewer({
+  onReuse: (trace) => {
+    promptInput.value = trace.prompt;
+    ($("seed") as HTMLInputElement).value = String(trace.seed);
+    const count = document.querySelector<HTMLInputElement>(`input[name=count][value="${trace.count}"]`);
+    if (count) count.checked = true;
+    if (trace.settings) {
+      ($("temperature") as HTMLInputElement).value = String(trace.settings.temperature);
+      ($("top-k") as HTMLInputElement).value = String(trace.settings.topK);
+      ($("supercondition") as HTMLInputElement).value = String(trace.settings.superconditionFactor);
+    }
+    window.scrollTo({ top: 0, behavior: "smooth" });
+    promptInput.focus({ preventScroll: true });
+  },
+  onInspect: (trace, image) => {
+    current = trace;
+    selectedImage = image;
+    setInsights(true);
+    panel.show(trace, image);
+    if (!matchMedia("(min-width: 1100px)").matches) insightsEl.scrollIntoView({ behavior: "smooth", block: "start" });
+  },
+});
 
 function setStatus(text: string, progress?: number, error = false) {
   statusText.textContent = text;
@@ -122,19 +145,16 @@ function buildCards(trace: Trace) {
     const save = Object.assign(document.createElement("button"), { className: "save", type: "button", textContent: "Save" });
     save.addEventListener("click", (e) => {
       e.stopPropagation();
-      final.toBlob((blob) => {
-        if (!blob) return;
-        const a = document.createElement("a");
-        a.href = URL.createObjectURL(blob);
-        a.download = `${trace.prompt.slice(0, 60).replace(/[^\w -]+/g, "").trim() || "dalle"}-${trace.seed}-${k + 1}.png`;
-        a.click();
-        setTimeout(() => URL.revokeObjectURL(a.href), 1000);
-      });
+      const image = trace.images[k];
+      if (image) savePNG(image, fileName(trace, k));
     });
+    // Select the image for the How it works panel, and open it in the
+    // viewer once it's finished.
     const select = () => {
       selectedImage = k;
       renderSelection();
       panel.show(current, selectedImage);
+      if (trace.images[k]) viewer.open(trace, k);
     };
     root.addEventListener("click", select);
     root.addEventListener("keydown", (e) => {
@@ -252,6 +272,11 @@ async function generate() {
   const prompt = promptInput.value.trim() || promptInput.placeholder;
   const count = Number((document.querySelector("input[name=count]:checked") as HTMLInputElement).value);
   const seed = Math.floor(numberInput("seed", Math.floor(Math.random() * 2 ** 31)));
+  const settings = {
+    temperature: numberInput("temperature", 1),
+    topK: Math.round(numberInput("top-k", 256)),
+    superconditionFactor: numberInput("supercondition", 16),
+  };
   const abort = new AbortController();
   running = abort;
   generateButton.textContent = "Stop";
@@ -270,6 +295,7 @@ async function generate() {
     stages: Array.from({ length: count }, () => new Map()),
     images: [],
     phase: "encoding",
+    settings,
   };
   current = trace;
   selectedImage = Math.min(selectedImage, count - 1);
@@ -284,9 +310,7 @@ async function generate() {
     const result = await m.generate(prompt, {
       seed,
       imageCount: count,
-      temperature: numberInput("temperature", 1),
-      topK: Math.round(numberInput("top-k", 256)),
-      superconditionFactor: numberInput("supercondition", 16),
+      ...settings,
       insights: insightsOpen,
       previewEvery: 4,
       signal: abort.signal,

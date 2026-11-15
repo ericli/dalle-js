@@ -161,6 +161,26 @@
         </ol>
       </aside>
     </div>
+    <dialog id="viewer" class="viewer" aria-label="Image viewer">
+      <div id="viewer-stage" class="viewer-stage">
+        <button id="viewer-prev" class="viewer-nav prev" type="button" aria-label="Previous image">←</button>
+        <canvas id="viewer-canvas" width="256" height="256"></canvas>
+        <button id="viewer-next" class="viewer-nav next" type="button" aria-label="Next image">→</button>
+      </div>
+      <aside class="viewer-info">
+        <div class="viewer-top">
+          <span id="viewer-index" class="label"></span>
+          <button id="viewer-close" class="link-button" type="button">Close <span class="label">Esc</span></button>
+        </div>
+        <h2 id="viewer-prompt"></h2>
+        <dl id="viewer-meta" class="viewer-meta"></dl>
+        <div class="viewer-actions">
+          <button id="viewer-save" class="button primary" type="button">Save</button>
+          <button id="viewer-reuse" class="button" type="button">Use prompt</button>
+          <button id="viewer-inspect" class="button" type="button">How it was made</button>
+        </div>
+      </aside>
+    </dialog>
     <div id="tooltip" class="tooltip" hidden></div>
     <script type="module" src="./app.ts"></script>
   </body>

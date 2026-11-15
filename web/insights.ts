@@ -33,6 +33,7 @@ export type Trace = {
   images: (Uint8ClampedArray | undefined)[];
   phase: Phase;
   totalMs?: number;
+  settings?: { temperature: number; topK: number; superconditionFactor: number };
 };
 
 const STAGE_LABELS: Record<VqganStage, [string, string]> = {
