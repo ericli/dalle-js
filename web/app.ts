@@ -1,5 +1,5 @@
 import { defaultDevice, init } from "@jax-js/jax";
-import { cachedFetch } from "@jax-js/loaders";
+import { cachedFetch, opfs } from "@jax-js/loaders";
 
 import { DalleModel, type FileLoader, IMAGE_TOKEN_COUNT } from "../src/pipeline.ts";
 import { InsightsPanel, type Trace } from "./insights.ts";
@@ -92,6 +92,17 @@ const loadFile: FileLoader = (name, onProgress) =>
     ? cachedFetch(WEIGHTS_URL + name, undefined, (p) => onProgress?.(p.loadedBytes, p.totalBytes))
     : fetchWithProgress(WEIGHTS_URL + name, onProgress);
 
+/** Earlier versions cached fp16 weights (925 MB); free that space once int8 loads. */
+async function forgetOldWeights() {
+  for (const name of ["encoder", "decoder", "detoker"]) {
+    try {
+      await opfs.remove(`${WEIGHTS_URL}${name}.f16.safetensors`);
+    } catch {
+      // Not cached, or storage unavailable.
+    }
+  }
+}
+
 const FILE_LABELS: Record<string, string> = {
   encoder: "text encoder",
   decoder: "image decoder",
@@ -102,7 +113,7 @@ function loadModel(): Promise<DalleModel> {
   loading ??= (async () => {
     const t0 = performance.now();
     const m = await DalleModel.load(loadFile, {
-      precision: "f16",
+      precision: "q8",
       onProgress: (file, loaded, total) => {
         const label = FILE_LABELS[file.split(".")[0]] ?? file;
         const mb = (x: number) => (x / 2 ** 20).toFixed(0);
@@ -114,6 +125,7 @@ function loadModel(): Promise<DalleModel> {
     });
     try {
       localStorage.setItem(CACHED_FLAG, "1");
+      if (import.meta.env.PROD) void forgetOldWeights();
     } catch {
       // Storage may be unavailable (private mode); only costs an auto-load.
     }

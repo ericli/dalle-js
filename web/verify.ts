@@ -34,7 +34,7 @@ const fetchLoader = (base: string) => async (name: string) => {
 
 async function run(data: FormData) {
   window.checkResults = undefined;
-  const precision = data.get("precision") as "f16" | "f32";
+  const precision = data.get("precision") as "f16" | "f32" | "q8";
   const compute = data.get("compute") as string;
   const computeDtype = compute === "auto" ? (supportsFloat16("webgpu") ? np.float16 : np.float32) : (compute as np.DType);
   const stages = new Set(data.getAll("stage") as Stage[]);
@@ -43,7 +43,8 @@ async function run(data: FormData) {
     window.checkResults = await runChecks({
       loadWeightsFile: fetchLoader("/weights/mini/"),
       loadRefFile: fetchLoader("/refs/"),
-      refName: "mini",
+      // int8 weights are checked against refs computed from the same dequantized weights.
+      refName: precision === "q8" ? "mini_q8" : "mini",
       precision,
       computeDtype,
       stages,

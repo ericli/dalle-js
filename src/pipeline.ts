@@ -33,8 +33,8 @@ export type FileLoader = (
 
 export type LoadOptions = {
   device?: Device;
-  /** Which weight files to fetch ("f16" halves the download). */
-  precision: "f16" | "f32";
+  /** Which weight files to fetch: "q8" (int8, ~465 MB), "f16" (~925 MB) or "f32". */
+  precision: "f16" | "f32" | "q8";
   /**
    * dtype the transformer computes in. The VQGAN always uses float32.
    * Default: float16 if the device supports it, else float32.

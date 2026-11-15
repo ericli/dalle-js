@@ -24,7 +24,7 @@ export type CheckOptions = {
   /** Reference name, e.g. "mini" for mini.json and mini.safetensors. */
   refName: string;
   /** Which weight files to load. */
-  precision: "f16" | "f32";
+  precision: "f16" | "f32" | "q8";
   /** dtype the transformer computes in (the VQGAN always uses float32). */
   computeDtype: np.DType;
   stages: Set<Stage>;
@@ -49,6 +49,8 @@ const COMPUTE_TOLERANCE = {
 const VQGAN_TOLERANCE = {
   f32: { vqRelative: 1e-3, image: 0.5 },
   f16: { vqRelative: 1e-2, image: 3 },
+  // Checked against refs computed from the same dequantized weights (refs/*_q8).
+  q8: { vqRelative: 1e-3, image: 0.5 },
 };
 
 const EMOJI = /\p{Extended_Pictographic}/u;

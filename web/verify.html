@@ -16,7 +16,7 @@
     <h1>dalle-js reference checks</h1>
     <p>Runs the port against min-dalle reference tensors on WebGPU. Dev only; needs <code>npm run dev</code>.</p>
     <form id="form">
-      <label>Weights <select name="precision"><option>f16</option><option>f32</option></select></label>
+      <label>Weights <select name="precision"><option>q8</option><option>f16</option><option>f32</option></select></label>
       <label>Compute <select name="compute"><option>auto</option><option>float16</option><option>float32</option></select></label>
       <label>Decoder steps <input name="steps" type="number" min="1" max="256" value="256" style="width: 5em" /></label>
       <label><input type="checkbox" name="stage" value="tokenizer" checked /> tokenizer</label>

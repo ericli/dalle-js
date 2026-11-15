@@ -20,9 +20,9 @@ Measured on an RTX 2080 Super in Chromium (Linux, Vulkan, no `shader-f16`, so th
 | VQGAN | ~0.2 s | ~0.9 s |
 | **Total** | **~6.7 s** | **~9.2 s** |
 
-The first generation after loading the page also spends about 1.5 s compiling shaders. Downloading the
-weights the first time is about 925 MB. Later visits load them from the browser's Origin Private File
-System, which takes about 3 s.
+The first generation after loading the page also spends about 1.5 s compiling shaders. The site
+downloads int8 weights the first time, 465 MB instead of 925 MB for fp16. Later visits load them from
+the browser's Origin Private File System, which takes about 3 s.
 
 Verification against min-dalle (fp32 PyTorch on CUDA, prompt "an armchair in the shape of an avocado",
 seed 7). The decoder is teacher-forced on the reference tokens, because PyTorch's RNG can't be
@@ -35,6 +35,13 @@ reproduced:
 | Decoder logits, worst of 256 steps | ≤ 1.1e-4 | 7.6e-5 |
 | Reference token in our top-256 | 256/256 | 256/256 |
 | VQGAN image (0–255), max abs diff | 0.008 | 1.29 (fp16 weight rounding; PyTorch gets 1.30) |
+
+**int8 weights** (`python/quantize.py`) store large matrices as int8 with one scale per row. The
+browser dequantizes them on load, so compute is unchanged. On WebGPU they match the same dequantized
+model in PyTorch within 7.6e-5 on logits and 0.004 on the image (`verify.html?precision=q8`). Against
+the fp32 model, int8 moves 5.0% of the sampling probability per step on average, and keeps the same top
+token 236 times out of 256. fp16 compute alone moves 2.7%. 4-bit formats, fp4 included, moved 43–50% in
+the same test, so the site uses int8.
 
 ## Layout
 
@@ -68,6 +75,7 @@ python -I python/convert.py mini weights/mini
 python -I python/dump_refs.py weights/mini refs/mini
 python -I python/dump_tokenizer_cases.py weights/mini refs/tokenizer_cases.json
 python -I python/preview_head.py weights/mini     # about 3 minutes on the GPU
+python -I python/quantize.py weights/mini refs/mini  # int8 files + refs/mini_q8 references
 npm install
 ```
 
@@ -78,7 +86,7 @@ npm run dev
 ```
 
 Then open http://localhost:5173 for the app, or http://localhost:5173/verify.html for the reference
-checks on WebGPU (`?precision=f16&compute=auto&steps=256&autorun`). The dev server serves `weights/`
+checks on WebGPU (`?precision=q8&compute=auto&steps=256&autorun`, or `f16`/`f32`). The dev server serves `weights/`
 and `refs/` directly; they are never copied into the build.
 
 ```bash
@@ -93,9 +101,9 @@ convolutions run on a single thread.
 The page is meant to live at a subpath of another site (here www.lieric.com/dalle), and its weights
 live on Hugging Face.
 
-1. **Weights.** Upload these files from `weights/mini/` to a Hugging Face model repo (about 925 MB in
-   total; the largest file is 449 MB): `config.json`, `vocab.json`, `merges.txt`,
-   `encoder.f16.safetensors`, `decoder.f16.safetensors`, `detoker.f16.safetensors`,
+1. **Weights.** Upload these files from `weights/mini/` to a Hugging Face model repo (465 MB in
+   total; the largest file is 226 MB): `config.json`, `vocab.json`, `merges.txt`,
+   `encoder.q8.safetensors`, `decoder.q8.safetensors`, `detoker.q8.safetensors`,
    `preview_head.safetensors` and `token_colors.bin`. Hugging Face allows cross-site downloads.
    GitHub (100 MB file limit) and Vercel (bandwidth) are poor fits for files this size.
 2. **Weights URL.** `web/.env.production` sets `VITE_WEIGHTS_URL` to the repo's
