@@ -6,6 +6,12 @@
     <title>DALL·E Mini</title>
     <meta name="description" content="DALL·E Mini, a text-to-image model, running entirely on your GPU in the browser." />
     <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Crect x='1' y='1' width='6' height='6' fill='%23000'/%3E%3Crect x='9' y='1' width='6' height='6' fill='none' stroke='%23000'/%3E%3Crect x='1' y='9' width='6' height='6' fill='none' stroke='%23000'/%3E%3Crect x='9' y='9' width='6' height='6' fill='%23000'/%3E%3C/svg%3E" />
+    <script>
+      // Apply a saved light theme before first paint (dark is the default).
+      try {
+        if (localStorage.getItem("dalle-js:theme") === "light") document.documentElement.dataset.theme = "light";
+      } catch {}
+    </script>
     <link rel="stylesheet" href="./style.css" />
   </head>
   <body>
@@ -19,6 +25,7 @@
         <button id="toggle-insights" class="link-button" type="button" aria-pressed="false" aria-controls="insights">
           How it works
         </button>
+        <button id="theme-toggle" class="link-button" type="button">Light</button>
         <a href="https://github.com/ericli/dalle-js">Source</a>
       </div>
     </header>

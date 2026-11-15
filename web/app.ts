@@ -390,6 +390,28 @@ function setInsights(open: boolean) {
   }
 }
 
+// ---- Theme (dark by default) -----------------------------------------------
+
+const themeToggle = $<HTMLButtonElement>("theme-toggle");
+
+function setTheme(theme: "dark" | "light") {
+  if (theme === "light") document.documentElement.dataset.theme = "light";
+  else delete document.documentElement.dataset.theme;
+  themeToggle.textContent = theme === "light" ? "Dark" : "Light";
+  themeToggle.setAttribute("aria-label", `Switch to ${theme === "light" ? "dark" : "light"} theme`);
+  try {
+    localStorage.setItem("dalle-js:theme", theme);
+  } catch {
+    // ignore
+  }
+  panel.refreshTheme();
+}
+
+themeToggle.addEventListener("click", () =>
+  setTheme(document.documentElement.dataset.theme === "light" ? "dark" : "light"),
+);
+themeToggle.textContent = document.documentElement.dataset.theme === "light" ? "Dark" : "Light";
+
 toggle.addEventListener("click", () => {
   setInsights(!insightsOpen());
   // Below the two-column breakpoint the panel sits under the images.

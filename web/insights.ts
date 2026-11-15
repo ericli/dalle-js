@@ -95,10 +95,12 @@ export class InsightsPanel {
     $("replay").addEventListener("click", () => this.replay());
     this.hoverHeatmap();
     this.hoverTokenGrid();
-    matchMedia("(prefers-color-scheme: dark)").addEventListener("change", () => {
-      this.drawnEncoderFor = -1;
-      this.render();
-    });
+  }
+
+  /** Redraw canvases whose colors come from the theme. */
+  refreshTheme() {
+    this.drawnEncoderFor = -1;
+    this.render();
   }
 
   show(trace: Trace | null, image = this.image) {

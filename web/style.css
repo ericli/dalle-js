@@ -1,51 +1,8 @@
 /* Are.na-like: Arial, soft black on white, hairlines, square blocks.
    Data labels borrow Paradigm's small spaced monospace. */
 
+/* Dark by default; data-theme="light" switches to light. */
 :root {
-  color-scheme: light;
-  --bg: #ffffff;
-  --ink: #333333;
-  --ink-strong: #000000;
-  --gray: #696969;
-  --gray-2: #999999;
-  --line: #e6e6e6;
-  --line-strong: #cccccc;
-  --wash: #f5f5f5;
-  --button: #eeeeee;
-  --critical: #c62828;
-  /* Sequential (gray) and diverging (blue <-> red, gray midpoint) ramps. */
-  --seq-lo: #f0f0f0;
-  --seq-hi: #333333;
-  --div-neg: #1c5cab;
-  --div-mid: #f0efec;
-  --div-pos: #c23b3a;
-  --sans: Arial, "Helvetica Neue", Helvetica, sans-serif;
-  --mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
-  font-family: var(--sans);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"]) {
-    color-scheme: dark;
-    --bg: #000000;
-    --ink: #e5e5e5;
-    --ink-strong: #ffffff;
-    --gray: #8c8c8c;
-    --gray-2: #666666;
-    --line: #262626;
-    --line-strong: #404040;
-    --wash: #141414;
-    --button: #222222;
-    --critical: #ef6a6a;
-    --seq-lo: #1c1c1c;
-    --seq-hi: #e5e5e5;
-    --div-neg: #5598e7;
-    --div-mid: #383835;
-    --div-pos: #e66767;
-  }
-}
-
-:root[data-theme="dark"] {
   color-scheme: dark;
   --bg: #000000;
   --ink: #e5e5e5;
@@ -57,11 +14,45 @@
   --wash: #141414;
   --button: #222222;
   --critical: #ef6a6a;
+  /* Sequential (gray) and diverging (blue <-> red, gray midpoint) ramps. */
   --seq-lo: #1c1c1c;
   --seq-hi: #e5e5e5;
   --div-neg: #5598e7;
   --div-mid: #383835;
   --div-pos: #e66767;
+  --sans: Arial, "Helvetica Neue", Helvetica, sans-serif;
+  --mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  font-family: var(--sans);
+}
+
+:root[data-theme="light"] {
+  color-scheme: light;
+  --bg: #ffffff;
+  --ink: #333333;
+  --ink-strong: #000000;
+  --gray: #696969;
+  --gray-2: #999999;
+  --line: #e6e6e6;
+  --line-strong: #cccccc;
+  --wash: #f5f5f5;
+  --button: #eeeeee;
+  --critical: #c62828;
+  --seq-lo: #f0f0f0;
+  --seq-hi: #333333;
+  --div-neg: #1c5cab;
+  --div-mid: #f0efec;
+  --div-pos: #c23b3a;
+}
+
+/* No visible scrollbars; everything still scrolls. */
+html,
+.insights {
+  scrollbar-width: none;
+}
+
+html::-webkit-scrollbar,
+.insights::-webkit-scrollbar {
+  display: none;
 }
 
 * {
@@ -122,8 +113,10 @@ input {
 
 .topbar {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
+  white-space: nowrap;
   gap: 16px;
   padding: 14px 24px;
   font-size: 12.5px;
@@ -148,6 +141,7 @@ input {
   display: flex;
   align-items: center;
   gap: 16px;
+  margin-left: auto;
 }
 
 .link-button {
