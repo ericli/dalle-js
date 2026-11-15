@@ -90,21 +90,29 @@ convolutions run on a single thread.
 
 ## Deploy
 
-1. Upload these files from `weights/mini/` to a host that allows CORS and large files (about 925 MB
+The page is meant to live at a subpath of another site (here www.lieric.com/dalle), and its weights
+live on Hugging Face.
+
+1. **Weights.** Upload these files from `weights/mini/` to a Hugging Face model repo (about 925 MB in
    total; the largest file is 449 MB): `config.json`, `vocab.json`, `merges.txt`,
    `encoder.f16.safetensors`, `decoder.f16.safetensors`, `detoker.f16.safetensors`,
-   `preview_head.safetensors` and `token_colors.bin`. A Hugging Face model repo works, as does any
-   bucket with CORS enabled. GitHub Pages, Netlify and Cloudflare Pages all have per-file size limits
-   that are too small.
-2. Build with the weights URL, which must end in `/`:
-   ```bash
-   VITE_WEIGHTS_URL=https://huggingface.co/<user>/<repo>/resolve/main/ npm run build
+   `preview_head.safetensors` and `token_colors.bin`. Hugging Face allows cross-site downloads.
+   GitHub (100 MB file limit) and Vercel (bandwidth) are poor fits for files this size.
+2. **Weights URL.** `web/.env.production` sets `VITE_WEIGHTS_URL` to the repo's
+   `https://huggingface.co/<user>/<repo>/resolve/main/` (it must end in `/`).
+3. **This app on Vercel.** Import this repo as a Vercel project. `vercel.json` builds it with
+   `vite build --base /dalle/`, so every asset URL starts with `/dalle/`, and strips that prefix
+   when serving. The deployment works both on its own `*.vercel.app` URL and behind a proxy.
+4. **The main site.** Add rewrites ahead of any catch-all rules in the main site's `vercel.json`:
+   ```json
+   { "source": "/dalle", "destination": "https://<project>.vercel.app/dalle/" },
+   { "source": "/dalle/:path*", "destination": "https://<project>.vercel.app/dalle/:path*" }
    ```
-3. Host `dist/` (about 110 KB gzipped) anywhere, for example under a path on your site. `npm run preview`
-   serves the production build locally, including the OPFS caching.
 
-The page downloads nothing until the first Generate click, and a note under the prompt warns about the
-download size first. After that it remembers that the weights are cached and loads them on startup.
+The built app is about 110 KB gzipped. To serve a production build locally, including the OPFS
+caching, run `npm run build && npm run preview`. The page downloads nothing until the first Generate
+click, and a note under the prompt warns about the size first. After that it remembers that the weights
+are cached and loads them on startup.
 
 ## Notes from the port
 
