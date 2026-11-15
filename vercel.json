@@ -4,6 +4,9 @@
   "installCommand": "npm ci",
   "buildCommand": "npm run build -- --base /dalle/",
   "outputDirectory": "dist",
-  "redirects": [{ "source": "/", "destination": "/dalle/", "permanent": false }],
-  "rewrites": [{ "source": "/dalle/:path*", "destination": "/:path*" }]
+  "redirects": [{ "source": "/", "destination": "/dalle", "permanent": false }],
+  "rewrites": [
+    { "source": "/dalle/", "destination": "/index.html" },
+    { "source": "/dalle/:path*", "destination": "/:path*" }
+  ]
 }
